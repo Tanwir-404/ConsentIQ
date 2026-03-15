@@ -118,7 +118,7 @@ export default function PortalHome() {
               <Clock size={14} color="#94a3b8" />
               <div>
                 <div style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>{a.agreement_name}</div>
-                <div style={{ fontSize: '12px', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}</div>
               </div>
             </div>
             <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, background: a.consent_status?.toLowerCase().includes('in') ? '#dcfce7' : '#fee2e2', color: a.consent_status?.toLowerCase().includes('in') ? '#16a34a' : '#dc2626' }}>

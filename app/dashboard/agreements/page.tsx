@@ -79,7 +79,7 @@ export default function AgreementsPage() {
                 <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '14px' }}>{i+1}</td>
                 <td style={{ padding: '14px 20px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ background: '#f5f3ff', borderRadius: '6px', padding: '6px' }}><Handshake size={14} color="#8b5cf6" /></div><span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>{a.agreement_name}</span></div></td>
                 <td style={{ padding: '14px 20px' }}><span style={{ background: '#eff6ff', color: '#2563eb', padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 500 }}>{a.Policy?.policy_name || 'No Policy'}</span></td>
-                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(a.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(a.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}</td>
                 <td style={{ padding: '14px 20px' }}><button onClick={() => deleteAgreement(a.agreement_id)} style={{ background: '#fee2e2', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer' }}><Trash2 size={14} color="#dc2626" /></button></td>
               </tr>
             ))}

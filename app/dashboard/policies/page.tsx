@@ -68,7 +68,7 @@ export default function PoliciesPage() {
               <tr key={p.policy_id} style={{ borderBottom: '1px solid #f1f5f9' }} onMouseEnter={e => (e.currentTarget.style.background='#f8fafc')} onMouseLeave={e => (e.currentTarget.style.background='transparent')}>
                 <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '14px' }}>{i+1}</td>
                 <td style={{ padding: '14px 20px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ background: '#eff6ff', borderRadius: '6px', padding: '6px' }}><FileText size={14} color="#3b82f6" /></div><span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>{p.policy_name}</span></div></td>
-                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(p.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}</td>
                 <td style={{ padding: '14px 20px' }}><button onClick={() => deletePolicy(p.policy_id)} style={{ background: '#fee2e2', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer' }}><Trash2 size={14} color="#dc2626" /></button></td>
               </tr>
             ))}

@@ -231,7 +231,7 @@ export default function ConsentPage() {
                   </span>
                 </td>
                 <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>
-                  {new Date(c.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  {new Date(c.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}
                 </td>
                 <td style={{ padding: '14px 20px' }}>
                   <div style={{ display: 'flex', gap: '6px' }}>

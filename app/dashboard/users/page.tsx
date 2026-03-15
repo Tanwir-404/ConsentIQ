@@ -74,7 +74,7 @@ export default function UsersPage() {
                 <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '14px' }}>{i+1}</td>
                 <td style={{ padding: '14px 20px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Avatar name={u.name} /><span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>{u.name}</span></div></td>
                 <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{u.email}</td>
-                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(u.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(u.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}</td>
                 <td style={{ padding: '14px 20px' }}><button onClick={() => deleteUser(u.id)} style={{ background: '#fee2e2', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer' }}><Trash2 size={14} color="#dc2626" /></button></td>
               </tr>
             ))}
