@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ConsentIQ — Cyber Consent Management System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#f1f5f9;color:#1e293b}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .fade{animation:fadeIn 0.3s ease}
+
+    /* LOGIN */
+    #login-page{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1e40af 100%);display:flex;align-items:center;justify-content:center;padding:20px}
+    .login-wrap{width:100%;max-width:460px}
+    .login-brand{text-align:center;margin-bottom:28px}
+    .login-brand .icon{font-size:52px;margin-bottom:10px}
+    .login-brand h1{color:white;font-size:28px;font-weight:800}
+    .login-brand p{color:#93c5fd;font-size:14px;margin-top:4px}
+    .login-card{background:white;border-radius:16px;padding:36px;box-shadow:0 25px 50px rgba(0,0,0,0.3)}
+    .login-card h2{font-size:18px;font-weight:700;color:#0f172a;margin-bottom:6px}
+    .login-card p{color:#64748b;font-size:13px;margin-bottom:24px}
+    .lbl{font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px}
+    .inp{width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:14px;outline:none;font-family:'Inter',sans-serif;margin-bottom:16px;transition:border-color 0.2s}
+    .inp:focus{border-color:#3b82f6}
+    .login-btn{width:100%;padding:12px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px}
+    .login-hint{margin-top:20px;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;color:#475569;line-height:1.9}
+    .login-hint b{color:#0f172a}
+    .login-error{background:#fee2e2;color:#dc2626;padding:12px;border-radius:8px;font-size:13px;margin-bottom:14px;border:1px solid #fecaca;display:none}
+    .login-footer{text-align:center;color:#64748b;font-size:12px;margin-top:16px}
+
+    /* LAYOUT */
+    #app{display:none}
+    .layout{display:flex;min-height:100vh}
+    .sidebar{width:260px;min-height:100vh;position:fixed;left:0;top:0;bottom:0;padding:24px 16px;display:flex;flex-direction:column}
+    .admin-sidebar{background:linear-gradient(180deg,#0f172a 0%,#1e3a8a 100%)}
+    .user-sidebar{background:linear-gradient(180deg,#0f172a 0%,#065a82 100%)}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px;padding-left:8px}
+    .brand-icon{border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px}
+    .brand-name{color:white;font-weight:700;font-size:15px}
+    .brand-sub{font-size:11px}
+    .role-badge{border-radius:8px;padding:8px 12px;margin-bottom:20px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+    .admin-badge{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+    .user-badge{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#7dd3fc}
+    .nav-section{color:#475569;font-size:11px;font-weight:600;letter-spacing:1px;margin-bottom:8px;padding-left:12px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;border-left:3px solid transparent;color:#94a3b8;font-size:14px;margin-bottom:2px;transition:all 0.2s;text-decoration:none}
+    .nav-item:hover{background:rgba(255,255,255,0.05);color:#cbd5e1}
+    .nav-item.active.admin-nav{background:rgba(59,130,246,0.25);border-left-color:#3b82f6;color:#93c5fd;font-weight:600}
+    .nav-item.active.user-nav{background:rgba(2,132,199,0.3);border-left-color:#0284c7;color:#7dd3fc;font-weight:600}
+    .logout-btn{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;color:#f87171;font-size:14px;font-weight:500;border:1px solid rgba(248,113,113,0.2);margin-bottom:12px;background:none;width:100%;font-family:'Inter',sans-serif}
+    .sidebar-footer{border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;color:#475569;font-size:12px;padding-left:8px;margin-top:8px}
+    .nav-spacer{flex:1}
+    .main{margin-left:260px;flex:1;padding:32px;min-height:100vh}
+    .admin-main{background:#f1f5f9}
+    .user-main{background:#f0f9ff}
+
+    /* PAGES */
+    .page{display:none}
+    .page.active{display:block;animation:fadeIn 0.3s ease}
+    .page-title{font-size:24px;font-weight:700;color:#0f172a}
+    .page-sub{color:#64748b;margin-top:4px;font-size:14px}
+    .page-header{margin-bottom:28px}
+    .page-header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+
+    /* LIVE */
+    .live-badge{display:flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:6px 12px}
+    .live-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+    .live-text{font-size:12px;font-weight:600;color:#16a34a}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px}
+    .stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+    .stats-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
+    .stat-card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:center;gap:14px;border-top:4px solid}
+    .stat-icon{border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .stat-num{font-size:26px;font-weight:700;color:#0f172a}
+    .stat-lbl{font-size:12px;color:#64748b;margin-top:2px}
+
+    /* ENGINE */
+    .engine-card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:center;gap:14px}
+    .engine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .engine-item{padding:14px;border-radius:10px}
+
+    /* CARDS */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .card{background:white;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+    .card-title{font-size:16px;font-weight:600;color:#0f172a;margin-bottom:4px}
+    .card-sub{font-size:13px;color:#64748b;margin-bottom:16px}
+
+    /* RECENT */
+    .c-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f8fafc;border-radius:8px;margin-bottom:8px}
+    .c-name{font-size:14px;font-weight:500;color:#0f172a}
+    .c-meta{font-size:12px;color:#64748b}
+    .c-date{font-size:11px;color:#94a3b8}
+
+    /* TABLE */
+    .table-wrap{background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:#f8fafc;border-bottom:1px solid #e2e8f0}
+    th{text-align:left;padding:14px 20px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px}
+    tbody tr{border-bottom:1px solid #f1f5f9;transition:background 0.15s}
+    tbody tr:hover{background:#f8fafc}
+    td{padding:14px 20px;font-size:14px;color:#1e293b}
+    td.muted{color:#64748b}
+    td.num{color:#94a3b8}
+    .cell-flex{display:flex;align-items:center;gap:10px}
+    .cell-icon{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+    .avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0}
+    .u-name{font-size:14px;font-weight:500;color:#0f172a}
+    .u-email{font-size:12px;color:#94a3b8}
+
+    /* BADGES */
+    .badge{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;display:inline-block}
+    .bg{background:#dcfce7;color:#16a34a}
+    .br{background:#fee2e2;color:#dc2626}
+    .bb{background:#eff6ff;color:#2563eb}
+    .by{background:#fef9c3;color:#ca8a04}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500;font-family:'Inter',sans-serif}
+    .btn-blue{background:#3b82f6;color:white}
+    .btn-purple{background:#8b5cf6;color:white}
+    .btn-green{background:#10b981;color:white}
+    .btn-amber{background:#f59e0b;color:white}
+    .btn-cyan{background:#0284c7;color:white}
+    .btn-sm-g{background:#10b981;color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px}
+    .btn-sm-r{background:#ef4444;color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px}
+    .btn-sm-dis{background:#f1f5f9;color:#94a3b8;border:none;border-radius:8px;padding:8px 14px;cursor:not-allowed;font-size:13px;font-weight:600;font-family:'Inter',sans-serif}
+
+    /* PREF ITEM */
+    .pref-item{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:10px;background:#f8fafc;margin-bottom:10px;border:1px solid #e2e8f0}
+    .pref-item-name{font-size:14px;font-weight:600;color:#0f172a}
+    .pref-item-desc{font-size:12px;color:#94a3b8;margin-top:2px}
+    .pref-btns{display:flex;gap:8px;align-items:center}
+
+    /* WELCOME BANNER */
+    .welcome-banner{background:linear-gradient(135deg,#0f172a,#065a82);border-radius:16px;padding:28px;margin-bottom:24px;color:white}
+    .welcome-title{font-size:22px;font-weight:700}
+    .welcome-sub{color:#7dd3fc;font-size:14px;margin-top:6px}
+    .welcome-actions{margin-top:16px;display:flex;gap:12px}
+
+    /* GDPR NOTICE */
+    .gdpr-notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:24px;display:flex;gap:12px;align-items:flex-start}
+    .gdpr-title{font-size:14px;font-weight:600;color:#1d4ed8}
+    .gdpr-text{font-size:13px;color:#3b82f6;margin-top:2px}
+
+    /* SAVED TOAST */
+    .saved-toast{position:fixed;top:20px;right:20px;background:#dcfce7;color:#16a34a;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid #bbf7d0;display:none;z-index:999}
+  </style>
+</head>
+<body>
+
+<div class="saved-toast" id="saved-toast">✅ Preferences saved!</div>
+
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div id="login-page">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="icon">🛡️</div>
+      <h1>ConsentIQ</h1>
+      <p>Cyber Consent Management System</p>
+    </div>
+    <div class="login-card">
+      <h2>Sign in</h2>
+      <p>Enter your credentials to access the system</p>
+      <div class="login-error" id="login-error">⚠️ Invalid email or password. Please try again.</div>
+      <label class="lbl">Email Address</label>
+      <input id="l-email" class="inp" type="email" placeholder="Enter your email" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <label class="lbl">Password</label>
+      <input id="l-pass" class="inp" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <button class="login-btn" onclick="doLogin()">Sign In →</button>
+      <div class="login-hint">
+        <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">DEMO CREDENTIALS</div>
+        🔴 <b>Admin:</b> admin@consentiq.com / Admin@123<br>
+        🔵 <b>User:</b> user@consentiq.com / User@123
+      </div>
+    </div>
+    <div class="login-footer">Consent Management System — College Project 2026</div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app">
+  <div class="layout">
+
+    <!-- ADMIN SIDEBAR -->
+    <div id="admin-sidebar" class="sidebar admin-sidebar" style="display:none">
+      <div class="brand">
+        <div class="brand-icon" style="background:#3b82f6">🛡️</div>
+        <div><div class="brand-name">ConsentIQ</div><div class="brand-sub" style="color:#93c5fd">Admin Dashboard</div></div>
+      </div>
+      <div class="role-badge admin-badge">🔴 ADMIN ACCESS</div>
+      <div class="nav-section">MAIN MENU</div>
+      <a class="nav-item admin-nav active" onclick="showPage('admin-overview',this,'admin-nav')">📊 Overview</a>
+      <a class="nav-item admin-nav" onclick="showPage('admin-policies',this,'admin-nav')">📄 Policies</a>
+      <a class="nav-item admin-nav" onclick="showPage('admin-agreements',this,'admin-nav')">🤝 Agreements</a>
+      <a class="nav-item admin-nav" onclick="showPage('admin-users',this,'admin-nav')">👥 Users</a>
+      <a class="nav-item admin-nav" onclick="showPage('admin-consent',this,'admin-nav')">✅ Consent Records</a>
+      <a class="nav-item admin-nav" onclick="showPage('admin-audit',this,'admin-nav')">📋 Audit Log</a>
+      <div class="nav-spacer"></div>
+      <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
+      <div class="sidebar-footer">© 2026 ConsentIQ</div>
+    </div>
+
+    <!-- USER SIDEBAR -->
+    <div id="user-sidebar" class="sidebar user-sidebar" style="display:none">
+      <div class="brand">
+        <div class="brand-icon" style="background:#0284c7">🛡️</div>
+        <div><div class="brand-name">ConsentIQ</div><div class="brand-sub" style="color:#7dd3fc">Privacy Center</div></div>
+      </div>
+      <div class="role-badge user-badge" id="user-badge-name">👤 User Account</div>
+      <div class="nav-section">MY PRIVACY</div>
+      <a class="nav-item user-nav active" onclick="showPage('user-home',this,'user-nav')">🏠 My Dashboard</a>
+      <a class="nav-item user-nav" onclick="showPage('user-prefs',this,'user-nav')">⚙️ My Preferences</a>
+      <a class="nav-item user-nav" onclick="showPage('user-history',this,'user-nav')">📋 Consent History</a>
+      <div class="nav-spacer"></div>
+      <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
+      <div class="sidebar-footer">© 2026 ConsentIQ</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main-content" class="main admin-main">
+
+      <!-- ── ADMIN OVERVIEW ── -->
+      <div id="admin-overview" class="page active">
+        <div class="page-header-row">
+          <div><div class="page-title">Admin Dashboard</div><div class="page-sub">Real-time overview of your consent management system</div></div>
+          <div class="live-badge"><div class="live-dot"></div><span class="live-text">LIVE</span></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card" style="border-top-color:#3b82f6"><div class="stat-icon" style="background:#eff6ff">📄</div><div><div class="stat-num">3</div><div class="stat-lbl">Total Policies</div></div></div>
+          <div class="stat-card" style="border-top-color:#8b5cf6"><div class="stat-icon" style="background:#f5f3ff">🤝</div><div><div class="stat-num">3</div><div class="stat-lbl">Total Agreements</div></div></div>
+          <div class="stat-card" style="border-top-color:#10b981"><div class="stat-icon" style="background:#f0fdf4">👥</div><div><div class="stat-num">4</div><div class="stat-lbl">Total Users</div></div></div>
+          <div class="stat-card" style="border-top-color:#f59e0b"><div class="stat-icon" style="background:#fffbeb">✅</div><div><div class="stat-num">5</div><div class="stat-lbl">Total Consents</div></div></div>
+        </div>
+        <div class="stats-grid-2" style="margin-bottom:24px">
+          <div class="engine-card" style="border-left:4px solid #10b981"><span style="font-size:28px">🛡️</span><div><div style="font-size:24px;font-weight:700;color:#0f172a">3</div><div style="font-size:13px;color:#64748b">Active Consents (Opt-in) — Data Access ALLOWED</div></div></div>
+          <div class="engine-card" style="border-left:4px solid #ef4444"><span style="font-size:28px">🚫</span><div><div style="font-size:24px;font-weight:700;color:#0f172a">2</div><div style="font-size:13px;color:#64748b">Revoked Consents (Opt-out) — Data Access BLOCKED</div></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-title">Consent Status Breakdown</div><div class="card-sub">Consent Logic Engine — Allow vs Block</div><canvas id="adminChart" height="220"></canvas></div>
+          <div class="card">
+            <div class="card-title">Recent Consent Activity</div><div class="card-sub">Latest consent decisions ⚡</div>
+            <div class="c-item"><div><div class="c-name">John Smith</div><div class="c-meta">Cookie Tracking</div><div class="c-date">Mar 11, 2026</div></div><span class="badge br">Opt-out</span></div>
+            <div class="c-item"><div><div class="c-name">David Lee</div><div class="c-meta">Data Sharing Agreement</div><div class="c-date">Mar 12, 2026</div></div><span class="badge bg">Opt-in</span></div>
+            <div class="c-item"><div><div class="c-name">Warner Chen</div><div class="c-meta">Marketing Emails</div><div class="c-date">Mar 13, 2026</div></div><span class="badge bg">Opt-in</span></div>
+            <div class="c-item"><div><div class="c-name">Sara Ahmed</div><div class="c-meta">Data Collection</div><div class="c-date">Mar 14, 2026</div></div><span class="badge bg">Opt-in</span></div>
+            <div class="c-item"><div><div class="c-name">David Lee</div><div class="c-meta">Cookie Tracking</div><div class="c-date">Mar 15, 2026</div></div><span class="badge br">Opt-out</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ADMIN POLICIES ── -->
+      <div id="admin-policies" class="page">
+        <div class="page-header-row"><div><div class="page-title">Policies</div><div class="page-sub">Manage data privacy policies</div></div><button class="btn btn-blue">＋ Add Policy</button></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Policy Name</th><th>Created At</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><div class="cell-flex"><div class="cell-icon" style="background:#eff6ff">📄</div>Privacy Policy</div></td><td class="muted">Mar 1, 2026</td></tr>
+            <tr><td class="num">2</td><td><div class="cell-flex"><div class="cell-icon" style="background:#eff6ff">📄</div>Data Retention Policy</div></td><td class="muted">Mar 5, 2026</td></tr>
+            <tr><td class="num">3</td><td><div class="cell-flex"><div class="cell-icon" style="background:#eff6ff">📄</div>Cookie Policy</div></td><td class="muted">Mar 8, 2026</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- ── ADMIN AGREEMENTS ── -->
+      <div id="admin-agreements" class="page">
+        <div class="page-header-row"><div><div class="page-title">Agreements</div><div class="page-sub">Manage agreements linked to policies</div></div><button class="btn btn-purple">＋ Add Agreement</button></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Agreement Name</th><th>Linked Policy</th><th>Created At</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><div class="cell-flex"><div class="cell-icon" style="background:#f5f3ff">🤝</div>Cookie Tracking</div></td><td><span class="badge bb">Cookie Policy</span></td><td class="muted">Mar 8, 2026</td></tr>
+            <tr><td class="num">2</td><td><div class="cell-flex"><div class="cell-icon" style="background:#f5f3ff">🤝</div>Data Sharing Agreement</div></td><td><span class="badge bb">Privacy Policy</span></td><td class="muted">Mar 9, 2026</td></tr>
+            <tr><td class="num">3</td><td><div class="cell-flex"><div class="cell-icon" style="background:#f5f3ff">🤝</div>Marketing Emails</div></td><td><span class="badge bb">Data Retention Policy</span></td><td class="muted">Mar 10, 2026</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- ── ADMIN USERS ── -->
+      <div id="admin-users" class="page">
+        <div class="page-header-row"><div><div class="page-title">Users</div><div class="page-sub">Manage registered users</div></div><button class="btn btn-green">＋ Add User</button></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>User</th><th>Email</th><th>Joined</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><div class="cell-flex"><div class="avatar" style="background:#3b82f6">JS</div>John Smith</div></td><td class="muted">john@gmail.com</td><td class="muted">Mar 1, 2026</td></tr>
+            <tr><td class="num">2</td><td><div class="cell-flex"><div class="avatar" style="background:#8b5cf6">DL</div>David Lee</div></td><td class="muted">david@gmail.com</td><td class="muted">Mar 3, 2026</td></tr>
+            <tr><td class="num">3</td><td><div class="cell-flex"><div class="avatar" style="background:#10b981">WC</div>Warner Chen</div></td><td class="muted">warner@gmail.com</td><td class="muted">Mar 5, 2026</td></tr>
+            <tr><td class="num">4</td><td><div class="cell-flex"><div class="avatar" style="background:#f59e0b">SA</div>Sara Ahmed</div></td><td class="muted">sara@gmail.com</td><td class="muted">Mar 7, 2026</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- ── ADMIN CONSENT ── -->
+      <div id="admin-consent" class="page">
+        <div class="page-header-row"><div><div class="page-title">Consent Records</div><div class="page-sub">View, update and revoke user consent decisions</div></div><button class="btn btn-amber">＋ Add Consent</button></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>User</th><th>Agreement</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><div class="u-name">John Smith</div><div class="u-email">john@gmail.com</div></td><td class="muted">Cookie Tracking</td><td><span class="badge br">Opt-out</span></td><td class="muted">Mar 11, 2026</td><td><button class="btn btn-blue" style="padding:6px 10px;font-size:12px" onclick="toggleStatus(this)">Toggle</button></td></tr>
+            <tr><td class="num">2</td><td><div class="u-name">David Lee</div><div class="u-email">david@gmail.com</div></td><td class="muted">Data Sharing</td><td><span class="badge bg">Opt-in</span></td><td class="muted">Mar 12, 2026</td><td><div style="display:flex;gap:6px"><button class="btn btn-blue" style="padding:6px 10px;font-size:12px" onclick="toggleStatus(this)">Toggle</button><button style="background:#fff7ed;color:#ea580c;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600" onclick="revokeStatus(this)">Revoke</button></div></td></tr>
+            <tr><td class="num">3</td><td><div class="u-name">Warner Chen</div><div class="u-email">warner@gmail.com</div></td><td class="muted">Marketing Emails</td><td><span class="badge bg">Opt-in</span></td><td class="muted">Mar 13, 2026</td><td><div style="display:flex;gap:6px"><button class="btn btn-blue" style="padding:6px 10px;font-size:12px" onclick="toggleStatus(this)">Toggle</button><button style="background:#fff7ed;color:#ea580c;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600" onclick="revokeStatus(this)">Revoke</button></div></td></tr>
+            <tr><td class="num">4</td><td><div class="u-name">Sara Ahmed</div><div class="u-email">sara@gmail.com</div></td><td class="muted">Data Collection</td><td><span class="badge bg">Opt-in</span></td><td class="muted">Mar 14, 2026</td><td><div style="display:flex;gap:6px"><button class="btn btn-blue" style="padding:6px 10px;font-size:12px" onclick="toggleStatus(this)">Toggle</button><button style="background:#fff7ed;color:#ea580c;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600" onclick="revokeStatus(this)">Revoke</button></div></td></tr>
+            <tr><td class="num">5</td><td><div class="u-name">David Lee</div><div class="u-email">david@gmail.com</div></td><td class="muted">Cookie Tracking</td><td><span class="badge br">Opt-out</span></td><td class="muted">Mar 15, 2026</td><td><button class="btn btn-blue" style="padding:6px 10px;font-size:12px" onclick="toggleStatus(this)">Toggle</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- ── ADMIN AUDIT ── -->
+      <div id="admin-audit" class="page">
+        <div class="page-header"><div class="page-title">Audit Log</div><div class="page-sub">Complete system activity trail for GDPR/CCPA compliance</div></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Action</th><th>User</th><th>Details</th><th>Date & Time</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><span class="badge bg">INSERT</span></td><td>admin@consentiq.com</td><td class="muted">Created policy: Privacy Policy</td><td class="muted">Mar 1, 2026 09:00 AM</td></tr>
+            <tr><td class="num">2</td><td><span class="badge bg">INSERT</span></td><td>admin@consentiq.com</td><td class="muted">Added user: John Smith</td><td class="muted">Mar 1, 2026 09:15 AM</td></tr>
+            <tr><td class="num">3</td><td><span class="badge bg">INSERT</span></td><td>admin@consentiq.com</td><td class="muted">Created agreement: Cookie Tracking</td><td class="muted">Mar 8, 2026 11:00 AM</td></tr>
+            <tr><td class="num">4</td><td><span class="badge by">UPDATE</span></td><td>john@gmail.com</td><td class="muted">Consent updated: Opt-out for Cookie Tracking</td><td class="muted">Mar 11, 2026 02:30 PM</td></tr>
+            <tr><td class="num">5</td><td><span class="badge bg">INSERT</span></td><td>david@gmail.com</td><td class="muted">Consent accepted: Opt-in for Data Sharing</td><td class="muted">Mar 12, 2026 10:45 AM</td></tr>
+            <tr><td class="num">6</td><td><span class="badge by">REVOKE</span></td><td>warner@gmail.com</td><td class="muted">Consent revoked: Cookie Tracking → Opt-out</td><td class="muted">Mar 14, 2026 04:00 PM</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- ── USER HOME ── -->
+      <div id="user-home" class="page">
+        <div class="welcome-banner">
+          <div class="welcome-title">Welcome back, <span id="welcome-name">User</span>! 👋</div>
+          <div class="welcome-sub">Manage your privacy preferences and consent settings below.</div>
+          <div class="welcome-actions">
+            <a onclick="showPage('user-prefs',null,'user-nav')" style="background:#0284c7;color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">⚙️ Manage Preferences</a>
+            <a onclick="showPage('user-history',null,'user-nav')" style="background:rgba(255,255,255,0.1);color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">📋 View History</a>
+          </div>
+        </div>
+        <div class="stats-grid-3">
+          <div class="stat-card" style="border-top-color:#10b981"><span style="font-size:26px">🛡️</span><div><div class="stat-num" style="color:#10b981">3</div><div class="stat-lbl">Active Consents</div></div></div>
+          <div class="stat-card" style="border-top-color:#ef4444"><span style="font-size:26px">🚫</span><div><div class="stat-num" style="color:#ef4444">2</div><div class="stat-lbl">Revoked Consents</div></div></div>
+          <div class="stat-card" style="border-top-color:#3b82f6"><span style="font-size:26px">✅</span><div><div class="stat-num">5/5</div><div class="stat-lbl">Agreements Responded</div></div></div>
+        </div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">🔒 Consent Logic Engine — Your Data Access Status</div>
+          <div class="card-sub" style="margin-bottom:16px">Based on your consent decisions, here's what is allowed or blocked</div>
+          <div class="engine-grid">
+            <div class="engine-item" style="background:#f0fdf4;border:1px solid #bbf7d0"><div style="font-size:20px;margin-bottom:6px">📧</div><div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:4px">Marketing Emails</div><span class="badge bg" style="font-size:11px">✅ ALLOWED</span></div>
+            <div class="engine-item" style="background:#f0fdf4;border:1px solid #bbf7d0"><div style="font-size:20px;margin-bottom:6px">📊</div><div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:4px">Analytics Tracking</div><span class="badge bg" style="font-size:11px">✅ ALLOWED</span></div>
+            <div class="engine-item" style="background:#fef2f2;border:1px solid #fecaca"><div style="font-size:20px;margin-bottom:6px">🍪</div><div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:4px">Cookie Tracking</div><span class="badge br" style="font-size:11px">🚫 BLOCKED</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Activity</div>
+          <div class="c-item"><div><div class="c-name">Cookie Tracking</div><div class="c-date">Mar 11, 2026</div></div><span class="badge br">Opt-out</span></div>
+          <div class="c-item"><div><div class="c-name">Data Sharing Agreement</div><div class="c-date">Mar 12, 2026</div></div><span class="badge bg">Opt-in</span></div>
+          <div class="c-item"><div><div class="c-name">Marketing Emails</div><div class="c-date">Mar 13, 2026</div></div><span class="badge bg">Opt-in</span></div>
+        </div>
+      </div>
+
+      <!-- ── USER PREFS ── -->
+      <div id="user-prefs" class="page">
+        <div class="page-header-row">
+          <div><div class="page-title">Privacy Preference Center</div><div class="page-sub">Control how your personal data is used. Changes take effect immediately.</div></div>
+        </div>
+        <div class="gdpr-notice">
+          <span style="font-size:20px">🔒</span>
+          <div><div class="gdpr-title">Your Rights Under GDPR & CCPA</div><div class="gdpr-text">You have the right to grant, deny, or revoke consent at any time. Your preferences are stored securely and enforced immediately across all connected systems.</div></div>
+        </div>
+
+        <!-- Policy 1 -->
+        <div class="card" style="margin-bottom:20px">
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">📄 Cookie Policy</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px">Manage your consent for cookie-related agreements</div>
+          <div class="pref-item">
+            <div><div class="pref-item-name">Cookie Tracking</div><div class="pref-item-desc" id="pref-cookie-desc">🚫 You have denied this — data access is BLOCKED</div></div>
+            <div class="pref-btns">
+              <span class="badge br" id="pref-cookie-badge">DENIED</span>
+              <button class="btn-sm-g" id="pref-cookie-accept" onclick="acceptPref('cookie')">🛡️ Accept</button>
+              <button class="btn-sm-dis" id="pref-cookie-deny" disabled>🚫 Deny</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Policy 2 -->
+        <div class="card" style="margin-bottom:20px">
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">📄 Privacy Policy</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px">Manage your consent for data sharing agreements</div>
+          <div class="pref-item">
+            <div><div class="pref-item-name">Data Sharing Agreement</div><div class="pref-item-desc" id="pref-data-desc">✅ You have accepted this — data access is ALLOWED</div></div>
+            <div class="pref-btns">
+              <span class="badge bg" id="pref-data-badge">ACCEPTED</span>
+              <button class="btn-sm-dis" id="pref-data-accept" disabled>🛡️ Accept</button>
+              <button class="btn-sm-r" id="pref-data-deny" onclick="denyPref('data')">🚫 Revoke</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Policy 3 -->
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">📄 Data Retention Policy</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px">Manage your consent for marketing preferences</div>
+          <div class="pref-item">
+            <div><div class="pref-item-name">Marketing Emails</div><div class="pref-item-desc" id="pref-mkt-desc">✅ You have accepted this — data access is ALLOWED</div></div>
+            <div class="pref-btns">
+              <span class="badge bg" id="pref-mkt-badge">ACCEPTED</span>
+              <button class="btn-sm-dis" id="pref-mkt-accept" disabled>🛡️ Accept</button>
+              <button class="btn-sm-r" id="pref-mkt-deny" onclick="denyPref('mkt')">🚫 Revoke</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USER HISTORY ── -->
+      <div id="user-history" class="page">
+        <div class="page-header"><div class="page-title">Consent History</div><div class="page-sub">Complete record of all your consent decisions</div></div>
+        <div class="stats-grid-3" style="margin-bottom:24px">
+          <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);text-align:center"><div style="font-size:24px;font-weight:700;color:#0f172a">5</div><div style="font-size:12px;color:#64748b">Total Responses</div></div>
+          <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);text-align:center"><div style="font-size:24px;font-weight:700;color:#10b981">3</div><div style="font-size:12px;color:#64748b">Accepted (Opt-in)</div></div>
+          <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);text-align:center"><div style="font-size:24px;font-weight:700;color:#ef4444">2</div><div style="font-size:12px;color:#64748b">Denied / Revoked</div></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Agreement</th><th>Policy</th><th>Decision</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td style="font-weight:500">Cookie Tracking</td><td><span class="badge bb">Cookie Policy</span></td><td><span class="badge br">🚫 Denied</span></td><td class="muted">Mar 11, 2026</td></tr>
+            <tr><td class="num">2</td><td style="font-weight:500">Data Sharing Agreement</td><td><span class="badge bb">Privacy Policy</span></td><td><span class="badge bg">✅ Accepted</span></td><td class="muted">Mar 12, 2026</td></tr>
+            <tr><td class="num">3</td><td style="font-weight:500">Marketing Emails</td><td><span class="badge bb">Data Retention Policy</span></td><td><span class="badge bg">✅ Accepted</span></td><td class="muted">Mar 13, 2026</td></tr>
+            <tr><td class="num">4</td><td style="font-weight:500">Data Collection</td><td><span class="badge bb">Privacy Policy</span></td><td><span class="badge bg">✅ Accepted</span></td><td class="muted">Mar 14, 2026</td></tr>
+            <tr><td class="num">5</td><td style="font-weight:500">Cookie Tracking</td><td><span class="badge bb">Cookie Policy</span></td><td><span class="badge br">🚫 Revoked</span></td><td class="muted">Mar 15, 2026</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+    </div><!-- end main -->
+  </div><!-- end layout -->
+</div><!-- end app -->
+
+<script>
+const CREDS = [
+  { email:'admin@consentiq.com', password:'Admin@123', role:'admin', name:'Admin' },
+  { email:'user@consentiq.com',  password:'User@123',  role:'user',  name:'John Smith' },
+]
+
+let currentRole = 'admin'
+
+function doLogin() {
+  const email = document.getElementById('l-email').value.trim()
+  const pass  = document.getElementById('l-pass').value.trim()
+  const err   = document.getElementById('login-error')
+  const user  = CREDS.find(c => c.email === email && c.password === pass)
+
+  if (user) {
+    currentRole = user.role
+    err.style.display = 'none'
+    document.getElementById('login-page').style.display = 'none'
+    document.getElementById('app').style.display = 'block'
+
+    if (user.role === 'admin') {
+      document.getElementById('admin-sidebar').style.display = 'flex'
+      document.getElementById('user-sidebar').style.display  = 'none'
+      document.getElementById('main-content').className = 'main admin-main'
+      showPage('admin-overview', null, 'admin-nav')
+      setTimeout(initAdminChart, 300)
+    } else {
+      document.getElementById('user-sidebar').style.display  = 'flex'
+      document.getElementById('admin-sidebar').style.display = 'none'
+      document.getElementById('main-content').className = 'main user-main'
+      document.getElementById('welcome-name').textContent = user.name
+      document.getElementById('user-badge-name').textContent = '👤 ' + user.name
+      showPage('user-home', null, 'user-nav')
+    }
+  } else {
+    err.style.display = 'block'
+  }
+}
+
+function doLogout() {
+  document.getElementById('app').style.display         = 'none'
+  document.getElementById('login-page').style.display  = 'flex'
+  document.getElementById('l-email').value = ''
+  document.getElementById('l-pass').value  = ''
+}
+
+function showPage(name, el, navClass) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.getElementById(name).classList.add('active')
+  if (navClass) {
+    document.querySelectorAll('.' + navClass).forEach(n => n.classList.remove('active'))
+    if (el) el.classList.add('active')
+    else {
+      document.querySelectorAll('.' + navClass).forEach(n => {
+        if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(name)) n.classList.add('active')
+      })
+    }
+  }
+}
+
+function initAdminChart() {
+  const ctx = document.getElementById('adminChart')
+  if (!ctx) return
+  new Chart(ctx.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: ['Opt-in','Opt-out'], datasets: [{ data: [3,2], backgroundColor: ['#3b82f6','#ef4444'], borderWidth: 0, hoverOffset: 6 }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { padding: 20, font: { family: 'Inter', size: 13 } } }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} records` } } }, cutout: '65%' }
+  })
+}
+
+function toggleStatus(btn) {
+  const td = btn.closest('tr').querySelector('td:nth-child(4)')
+  const badge = td.querySelector('.badge')
+  if (badge.classList.contains('bg')) {
+    badge.className = 'badge br'; badge.textContent = 'Opt-out'
+  } else {
+    badge.className = 'badge bg'; badge.textContent = 'Opt-in'
+  }
+  showToast()
+}
+
+function revokeStatus(btn) {
+  const td = btn.closest('tr').querySelector('td:nth-child(4)')
+  const badge = td.querySelector('.badge')
+  badge.className = 'badge br'; badge.textContent = 'Opt-out'
+  showToast()
+}
+
+function acceptPref(key) {
+  document.getElementById('pref-'+key+'-badge').className = 'badge bg'
+  document.getElementById('pref-'+key+'-badge').textContent = 'ACCEPTED'
+  document.getElementById('pref-'+key+'-desc').textContent = '✅ You have accepted this — data access is ALLOWED'
+  document.getElementById('pref-'+key+'-accept').className = 'btn-sm-dis'
+  document.getElementById('pref-'+key+'-accept').disabled = true
+  document.getElementById('pref-'+key+'-deny').className = 'btn-sm-r'
+  document.getElementById('pref-'+key+'-deny').disabled = false
+  showToast()
+}
+
+function denyPref(key) {
+  document.getElementById('pref-'+key+'-badge').className = 'badge br'
+  document.getElementById('pref-'+key+'-badge').textContent = 'DENIED'
+  document.getElementById('pref-'+key+'-desc').textContent = '🚫 You have denied this — data access is BLOCKED'
+  document.getElementById('pref-'+key+'-deny').className = 'btn-sm-dis'
+  document.getElementById('pref-'+key+'-deny').disabled = true
+  document.getElementById('pref-'+key+'-accept').className = 'btn-sm-g'
+  document.getElementById('pref-'+key+'-accept').disabled = false
+  showToast()
+}
+
+function showToast() {
+  const t = document.getElementById('saved-toast')
+  t.style.display = 'block'
+  setTimeout(() => t.style.display = 'none', 2000)
+}
+</script>
+</body>
+</html>
