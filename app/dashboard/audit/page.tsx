@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ClipboardList } from 'lucide-react'
+import { toIST } from '@/lib/formatDate'
 
 type AuditLog = { id: string; action: string; user_email: string; details: string; entity_id: string; created_at: string }
 
@@ -14,16 +15,8 @@ function actionColor(action: string) {
   return { bg: '#eff6ff', text: '#2563eb' }
 }
 
-function toIST(dateStr: string) {
-  return new Date(dateStr).toLocaleString('en-IN', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-    timeZone: 'Asia/Kolkata',
-  })
-}
-
 export default function AuditPage() {
-  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [logs,    setLogs]    = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -45,11 +38,14 @@ export default function AuditPage() {
       <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            {['#','Action','User','Details','Date & Time (IST)'].map(h => <th key={h} style={{ textAlign: 'left', padding: '14px 20px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>)}
+            {['#','Action','User','Details','Date & Time (IST)'].map(h => (
+              <th key={h} style={{ textAlign: 'left', padding: '14px 20px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+            ))}
           </tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</td></tr>
-            : logs.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</td></tr>
+            ) : logs.length === 0 ? (
               <tr><td colSpan={5} style={{ padding: '60px', textAlign: 'center' }}>
                 <ClipboardList size={40} color="#cbd5e1" style={{ margin: '0 auto 12px', display: 'block' }} />
                 <div style={{ color: '#94a3b8', fontSize: '15px' }}>No audit logs yet</div>
@@ -62,10 +58,18 @@ export default function AuditPage() {
                   onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '14px' }}>{i+1}</td>
-                  <td style={{ padding: '14px 20px' }}><span style={{ background: colors.bg, color: colors.text, padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600 }}>{log.action || 'Unknown'}</span></td>
+                  <td style={{ padding: '14px 20px' }}>
+                    <span style={{ background: colors.bg, color: colors.text, padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600 }}>
+                      {log.action || 'Unknown'}
+                    </span>
+                  </td>
                   <td style={{ padding: '14px 20px', fontSize: '14px', color: '#0f172a' }}>{log.user_email || '—'}</td>
-                  <td style={{ padding: '14px 20px', fontSize: '13px', color: '#64748b', maxWidth: '300px' }}><div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.details || '—'}</div></td>
-                  <td style={{ padding: '14px 20px', fontSize: '13px', color: '#64748b', whiteSpace: 'nowrap' }}>{toIST(log.created_at)}</td>
+                  <td style={{ padding: '14px 20px', fontSize: '13px', color: '#64748b', maxWidth: '300px' }}>
+                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.details || '—'}</div>
+                  </td>
+                  <td style={{ padding: '14px 20px', fontSize: '13px', color: '#64748b', whiteSpace: 'nowrap' }}>
+                    {toIST(log.created_at)}
+                  </td>
                 </tr>
               )
             })}
