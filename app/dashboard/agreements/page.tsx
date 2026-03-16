@@ -6,6 +6,13 @@ import { Handshake, Plus, Trash2 } from 'lucide-react'
 type Agreement = { agreement_id: string; agreement_name: string; created_at: string; policy_id: string; Policy: { policy_name: string } | null }
 type Policy = { policy_id: string; policy_name: string }
 
+function toIST(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-IN', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  })
+}
+
 export default function AgreementsPage() {
   const [agreements, setAgreements] = useState<Agreement[]>([])
   const [policies,   setPolicies]   = useState<Policy[]>([])
@@ -55,8 +62,10 @@ export default function AgreementsPage() {
         <div style={{ background: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
           <h3 style={{ fontWeight: 600, marginBottom: '12px', color: '#0f172a' }}>New Agreement</h3>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Agreement name..." style={{ flex: 2, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', minWidth: '200px' }} />
-            <select value={policyId} onChange={e => setPolicyId(e.target.value)} style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', minWidth: '160px' }}>
+            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Agreement name..."
+              style={{ flex: 2, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', minWidth: '200px' }} />
+            <select value={policyId} onChange={e => setPolicyId(e.target.value)}
+              style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', minWidth: '160px' }}>
               <option value="">Select Policy</option>
               {policies.map(p => <option key={p.policy_id} value={p.policy_id}>{p.policy_name}</option>)}
             </select>
@@ -69,17 +78,19 @@ export default function AgreementsPage() {
       <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            {['#','Agreement Name','Linked Policy','Created At','Actions'].map(h => <th key={h} style={{ textAlign: 'left', padding: '14px 20px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>)}
+            {['#','Agreement Name','Linked Policy','Created At (IST)','Actions'].map(h => <th key={h} style={{ textAlign: 'left', padding: '14px 20px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>)}
           </tr></thead>
           <tbody>
             {loading ? <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</td></tr>
             : agreements.length === 0 ? <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No agreements yet.</td></tr>
             : agreements.map((a, i) => (
-              <tr key={a.agreement_id} style={{ borderBottom: '1px solid #f1f5f9' }} onMouseEnter={e => (e.currentTarget.style.background='#f8fafc')} onMouseLeave={e => (e.currentTarget.style.background='transparent')}>
+              <tr key={a.agreement_id} style={{ borderBottom: '1px solid #f1f5f9' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                 <td style={{ padding: '14px 20px', color: '#94a3b8', fontSize: '14px' }}>{i+1}</td>
                 <td style={{ padding: '14px 20px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ background: '#f5f3ff', borderRadius: '6px', padding: '6px' }}><Handshake size={14} color="#8b5cf6" /></div><span style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>{a.agreement_name}</span></div></td>
                 <td style={{ padding: '14px 20px' }}><span style={{ background: '#eff6ff', color: '#2563eb', padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 500 }}>{a.Policy?.policy_name || 'No Policy'}</span></td>
-                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{new Date(a.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' })}</td>
+                <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>{toIST(a.created_at)}</td>
                 <td style={{ padding: '14px 20px' }}><button onClick={() => deleteAgreement(a.agreement_id)} style={{ background: '#fee2e2', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer' }}><Trash2 size={14} color="#dc2626" /></button></td>
               </tr>
             ))}
