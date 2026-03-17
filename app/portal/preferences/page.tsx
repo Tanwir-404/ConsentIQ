@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ShieldCheck, ShieldX, RefreshCw } from 'lucide-react'
+import { ShieldCheck, ShieldX } from 'lucide-react'
 
 type AgreementWithConsent = {
   agreement_id: string
@@ -16,27 +16,32 @@ export default function PreferencesPage() {
   const [items,   setItems]   = useState<AgreementWithConsent[]>([])
   const [loading, setLoading] = useState(true)
   const [userId,  setUserId]  = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState('')
   const [saved,   setSaved]   = useState(false)
 
   useEffect(() => {
-    const name = localStorage.getItem('ciq_name') || ''
+    const name  = localStorage.getItem('ciq_name')  || ''
+    const email = localStorage.getItem('ciq_email') || ''
+    setUserEmail(email)
 
     async function fetchData() {
       // Find user by name
-      const { data: users } = await supabase.from('User').select('id').ilike('name', `%${name.split(' ')[0]}%`)
+      const { data: users } = await supabase
+        .from('User').select('id').ilike('name', `%${name.split(' ')[0]}%`)
       const uid = users?.[0]?.id || null
       setUserId(uid)
 
-      // Get all agreements with policy names
       const { data: agreements } = await supabase
         .from('Agreement').select('agreement_id, agreement_name, policy_id')
-      const { data: policies } = await supabase.from('Policy').select('policy_id, policy_name')
+      const { data: policies } = await supabase
+        .from('Policy').select('policy_id, policy_name')
 
-      // Get this user's consents
       let consents: any[] = []
       if (uid) {
-        const { data } = await supabase.from('Consent_Record')
-          .select('consent_id, consent_status, agreement_id').eq('user_id', uid)
+        const { data } = await supabase
+          .from('Consent_Record')
+          .select('consent_id, consent_status, agreement_id')
+          .eq('user_id', uid)
         consents = data || []
       }
 
@@ -52,38 +57,65 @@ export default function PreferencesPage() {
           updating:       false,
         }
       })
-      setItems(merged); setLoading(false)
+      setItems(merged)
+      setLoading(false)
     }
     fetchData()
   }, [])
 
-  // Accept consent
-  async function acceptConsent(agreementId: string, consentId: string | null) {
+  // ── Accept consent ────────────────────────────────────────
+  async function acceptConsent(agreementId: string, consentId: string | null, agreementName: string) {
     if (!userId) return alert('User not found in database')
     setItems(prev => prev.map(i => i.agreement_id === agreementId ? { ...i, updating: true } : i))
 
     if (consentId) {
-      await supabase.from('Consent_Record').update({ consent_status: 'Opt-in' }).eq('consent_id', consentId)
+      await supabase.from('Consent_Record')
+        .update({ consent_status: 'Opt-in' }).eq('consent_id', consentId)
     } else {
-      await supabase.from('Consent_Record').insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-in' })
+      await supabase.from('Consent_Record')
+        .insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-in' })
     }
 
-    setItems(prev => prev.map(i => i.agreement_id === agreementId ? { ...i, consent_status: 'Opt-in', updating: false } : i))
+    // ── Write to audit log ──────────────────────────────────
+    await supabase.from('audit_log').insert({
+      action:     'INSERT',
+      user_email: userEmail,
+      details:    `User accepted: ${agreementName}`,
+    })
+
+    setItems(prev => prev.map(i => i.agreement_id === agreementId
+      ? { ...i, consent_status: 'Opt-in', updating: false }
+      : i
+    ))
     showSaved()
   }
 
-  // Deny / Revoke consent
-  async function denyConsent(agreementId: string, consentId: string | null) {
+  // ── Deny / Revoke consent ─────────────────────────────────
+  async function denyConsent(agreementId: string, consentId: string | null, agreementName: string, isRevoke: boolean) {
     if (!userId) return alert('User not found in database')
     setItems(prev => prev.map(i => i.agreement_id === agreementId ? { ...i, updating: true } : i))
 
     if (consentId) {
-      await supabase.from('Consent_Record').update({ consent_status: 'Opt-out' }).eq('consent_id', consentId)
+      await supabase.from('Consent_Record')
+        .update({ consent_status: 'Opt-out' }).eq('consent_id', consentId)
     } else {
-      await supabase.from('Consent_Record').insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-out' })
+      await supabase.from('Consent_Record')
+        .insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-out' })
     }
 
-    setItems(prev => prev.map(i => i.agreement_id === agreementId ? { ...i, consent_status: 'Opt-out', updating: false } : i))
+    // ── Write to audit log ──────────────────────────────────
+    await supabase.from('audit_log').insert({
+      action:     'REVOKE',
+      user_email: userEmail,
+      details:    isRevoke
+        ? `User revoked consent: ${agreementName} → Opt-out`
+        : `User denied consent: ${agreementName} → Opt-out`,
+    })
+
+    setItems(prev => prev.map(i => i.agreement_id === agreementId
+      ? { ...i, consent_status: 'Opt-out', updating: false }
+      : i
+    ))
     showSaved()
   }
 
@@ -92,7 +124,11 @@ export default function PreferencesPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#64748b' }}>Loading your preferences...</div>
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#64748b' }}>
+      Loading your preferences...
+    </div>
+  )
 
   // Group by policy
   const grouped = items.reduce((acc, item) => {
@@ -120,7 +156,9 @@ export default function PreferencesPage() {
         <span style={{ fontSize: '20px' }}>🔒</span>
         <div>
           <div style={{ fontSize: '14px', fontWeight: 600, color: '#1d4ed8' }}>Your Rights Under GDPR & CCPA</div>
-          <div style={{ fontSize: '13px', color: '#3b82f6', marginTop: '2px' }}>You have the right to grant, deny, or revoke consent at any time. Your preferences are stored securely and enforced immediately.</div>
+          <div style={{ fontSize: '13px', color: '#3b82f6', marginTop: '2px' }}>
+            You have the right to grant, deny, or revoke consent at any time. Your preferences are stored securely and enforced immediately. All changes are recorded in the audit log.
+          </div>
         </div>
       </div>
 
@@ -149,19 +187,23 @@ export default function PreferencesPage() {
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {/* Current status badge */}
                 {item.consent_status && (
-                  <span style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, background: item.consent_status.toLowerCase().includes('in') ? '#dcfce7' : '#fee2e2', color: item.consent_status.toLowerCase().includes('in') ? '#16a34a' : '#dc2626' }}>
+                  <span style={{
+                    padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700,
+                    background: item.consent_status.toLowerCase().includes('in') ? '#dcfce7' : '#fee2e2',
+                    color:      item.consent_status.toLowerCase().includes('in') ? '#16a34a' : '#dc2626',
+                  }}>
                     {item.consent_status.toLowerCase().includes('in') ? 'ACCEPTED' : 'DENIED'}
                   </span>
                 )}
 
                 {/* Accept button */}
                 <button
-                  onClick={() => acceptConsent(item.agreement_id, item.consent_id)}
+                  onClick={() => acceptConsent(item.agreement_id, item.consent_id, item.agreement_name)}
                   disabled={item.updating || item.consent_status?.toLowerCase().includes('in')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
                     background: item.consent_status?.toLowerCase().includes('in') ? '#f1f5f9' : '#10b981',
-                    color: item.consent_status?.toLowerCase().includes('in') ? '#94a3b8' : 'white',
+                    color:      item.consent_status?.toLowerCase().includes('in') ? '#94a3b8' : 'white',
                     border: 'none', borderRadius: '8px', padding: '8px 14px',
                     cursor: item.consent_status?.toLowerCase().includes('in') ? 'not-allowed' : 'pointer',
                     fontSize: '13px', fontWeight: 600,
@@ -172,12 +214,17 @@ export default function PreferencesPage() {
 
                 {/* Deny / Revoke button */}
                 <button
-                  onClick={() => denyConsent(item.agreement_id, item.consent_id)}
+                  onClick={() => denyConsent(
+                    item.agreement_id,
+                    item.consent_id,
+                    item.agreement_name,
+                    item.consent_status?.toLowerCase().includes('in') ?? false
+                  )}
                   disabled={item.updating || item.consent_status?.toLowerCase().includes('out')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
                     background: item.consent_status?.toLowerCase().includes('out') ? '#f1f5f9' : '#ef4444',
-                    color: item.consent_status?.toLowerCase().includes('out') ? '#94a3b8' : 'white',
+                    color:      item.consent_status?.toLowerCase().includes('out') ? '#94a3b8' : 'white',
                     border: 'none', borderRadius: '8px', padding: '8px 14px',
                     cursor: item.consent_status?.toLowerCase().includes('out') ? 'not-allowed' : 'pointer',
                     fontSize: '13px', fontWeight: 600,
