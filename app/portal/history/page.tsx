@@ -8,19 +8,13 @@ type HistoryItem = {
   created_at: string; agreement_name: string; policy_name: string
 }
 
-// ── Inline IST conversion ─────────────────────────────────
-function formatIST(dateStr: string): string {
+function formatDate(dateStr: string): string {
   if (!dateStr) return '—'
-  const ms  = new Date(dateStr).getTime() + (5 * 60 + 30) * 60 * 1000
-  const ist = new Date(ms)
-  const dd  = String(ist.getUTCDate()).padStart(2, '0')
-  const mm  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][ist.getUTCMonth()]
-  const yy  = ist.getUTCFullYear()
-  const hh  = ist.getUTCHours()
-  const min = String(ist.getUTCMinutes()).padStart(2, '0')
-  const ap  = hh >= 12 ? 'PM' : 'AM'
-  const h12 = hh % 12 || 12
-  return `${dd} ${mm} ${yy}, ${h12}:${min} ${ap}`
+  const d   = new Date(dateStr)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]
+  const yr  = d.getUTCFullYear()
+  return `${day} ${mon} ${yr}`
 }
 
 export default function HistoryPage() {
@@ -34,13 +28,17 @@ export default function HistoryPage() {
         .from('User').select('id').ilike('name', `%${name.split(' ')[0]}%`)
       const uid = users?.[0]?.id
       if (!uid) { setLoading(false); return }
-      const { data: consents }   = await supabase.from('Consent_Record')
+
+      const { data: consents }   = await supabase
+        .from('Consent_Record')
         .select('consent_id, consent_status, created_at, agreement_id')
-        .eq('user_id', uid).order('created_at', { ascending: false })
-      const { data: agreements } = await supabase.from('Agreement')
-        .select('agreement_id, agreement_name, policy_id')
-      const { data: policies }   = await supabase.from('Policy')
-        .select('policy_id, policy_name')
+        .eq('user_id', uid)
+        .order('created_at', { ascending: false })
+      const { data: agreements } = await supabase
+        .from('Agreement').select('agreement_id, agreement_name, policy_id')
+      const { data: policies }   = await supabase
+        .from('Policy').select('policy_id, policy_name')
+
       const merged = (consents || []).map(c => {
         const agreement = agreements?.find(a => a.agreement_id === c.agreement_id)
         const policy    = policies?.find(p => p.policy_id === agreement?.policy_id)
@@ -89,7 +87,7 @@ export default function HistoryPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              {['#','Agreement','Policy','Decision','Date & Time (IST)'].map(h => (
+              {['#','Agreement','Policy','Decision','Date'].map(h => (
                 <th key={h} style={{ textAlign: 'left', padding: '14px 20px', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
               ))}
             </tr>
@@ -123,7 +121,7 @@ export default function HistoryPage() {
                   </span>
                 </td>
                 <td style={{ padding: '14px 20px', fontSize: '14px', color: '#64748b' }}>
-                  {formatIST(h.created_at)}
+                  {formatDate(h.created_at)}
                 </td>
               </tr>
             ))}

@@ -13,11 +13,11 @@ type AgreementWithConsent = {
 }
 
 export default function PreferencesPage() {
-  const [items,   setItems]   = useState<AgreementWithConsent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userId,  setUserId]  = useState<string | null>(null)
+  const [items,     setItems]     = useState<AgreementWithConsent[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [userId,    setUserId]    = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState('')
-  const [saved,   setSaved]   = useState(false)
+  const [saved,     setSaved]     = useState(false)
 
   useEffect(() => {
     const name  = localStorage.getItem('ciq_name')  || ''
@@ -25,7 +25,6 @@ export default function PreferencesPage() {
     setUserEmail(email)
 
     async function fetchData() {
-      // Find user by name
       const { data: users } = await supabase
         .from('User').select('id').ilike('name', `%${name.split(' ')[0]}%`)
       const uid = users?.[0]?.id || null
@@ -64,57 +63,80 @@ export default function PreferencesPage() {
   }, [])
 
   // ── Accept consent ────────────────────────────────────────
-  async function acceptConsent(agreementId: string, consentId: string | null, agreementName: string) {
+  async function acceptConsent(
+    agreementId: string,
+    consentId: string | null,
+    agreementName: string
+  ) {
     if (!userId) return alert('User not found in database')
-    setItems(prev => prev.map(i => i.agreement_id === agreementId ? { ...i, updating: true } : i))
+    setItems(prev => prev.map(i =>
+      i.agreement_id === agreementId ? { ...i, updating: true } : i
+    ))
+
+    const now = new Date().toISOString()
 
     if (consentId) {
       await supabase.from('Consent_Record')
-        .update({ consent_status: 'Opt-in' }).eq('consent_id', consentId)
+        .update({ consent_status: 'Opt-in', created_at: now })
+        .eq('consent_id', consentId)
     } else {
       await supabase.from('Consent_Record')
-        .insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-in' })
+        .insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-in', created_at: now })
     }
 
-    // ── Write to audit log ──────────────────────────────────
+    // Write to audit log
     await supabase.from('audit_log').insert({
       action:     'INSERT',
       user_email: userEmail,
       details:    `User accepted: ${agreementName}`,
+      created_at: now,
     })
 
-    setItems(prev => prev.map(i => i.agreement_id === agreementId
-      ? { ...i, consent_status: 'Opt-in', updating: false }
-      : i
+    setItems(prev => prev.map(i =>
+      i.agreement_id === agreementId
+        ? { ...i, consent_status: 'Opt-in', updating: false }
+        : i
     ))
     showSaved()
   }
 
   // ── Deny / Revoke consent ─────────────────────────────────
-  async function denyConsent(agreementId: string, consentId: string | null, agreementName: string, isRevoke: boolean) {
+  async function denyConsent(
+    agreementId: string,
+    consentId: string | null,
+    agreementName: string,
+    isRevoke: boolean
+  ) {
     if (!userId) return alert('User not found in database')
-    setItems(prev => prev.map(i => i.agreement_id === agreementId ? { ...i, updating: true } : i))
+    setItems(prev => prev.map(i =>
+      i.agreement_id === agreementId ? { ...i, updating: true } : i
+    ))
+
+    const now = new Date().toISOString()
 
     if (consentId) {
       await supabase.from('Consent_Record')
-        .update({ consent_status: 'Opt-out' }).eq('consent_id', consentId)
+        .update({ consent_status: 'Opt-out', created_at: now })
+        .eq('consent_id', consentId)
     } else {
       await supabase.from('Consent_Record')
-        .insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-out' })
+        .insert({ user_id: userId, agreement_id: agreementId, consent_status: 'Opt-out', created_at: now })
     }
 
-    // ── Write to audit log ──────────────────────────────────
+    // Write to audit log
     await supabase.from('audit_log').insert({
       action:     'REVOKE',
       user_email: userEmail,
       details:    isRevoke
         ? `User revoked consent: ${agreementName} → Opt-out`
         : `User denied consent: ${agreementName} → Opt-out`,
+      created_at: now,
     })
 
-    setItems(prev => prev.map(i => i.agreement_id === agreementId
-      ? { ...i, consent_status: 'Opt-out', updating: false }
-      : i
+    setItems(prev => prev.map(i =>
+      i.agreement_id === agreementId
+        ? { ...i, consent_status: 'Opt-out', updating: false }
+        : i
     ))
     showSaved()
   }
@@ -130,7 +152,6 @@ export default function PreferencesPage() {
     </div>
   )
 
-  // Group by policy
   const grouped = items.reduce((acc, item) => {
     if (!acc[item.policy_name]) acc[item.policy_name] = []
     acc[item.policy_name].push(item)
@@ -185,7 +206,6 @@ export default function PreferencesPage() {
               </div>
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                {/* Current status badge */}
                 {item.consent_status && (
                   <span style={{
                     padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700,
